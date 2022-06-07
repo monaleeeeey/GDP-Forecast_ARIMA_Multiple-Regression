@@ -1,0 +1,252 @@
+---
+title: "**Forecasting the Gross Domestic Product of the Philippines using ARIMA Model**"
+author: "Jifervel Monalee L. Bajo, Abegail D. Borces, and Joey Marc Ace G. Catalan"
+geometry: "left=1.5cm,right=1.5cm,top=1.5cm,bottom=2cm"
+output:
+  pdf_document: default
+  bookdown::html_document2: default
+  bookdown::pdf_document2: default
+  mainfont: Times New Roman
+---
+
+```{r, include=FALSE}
+options(tinytex.verbose = TRUE)
+```
+
+## Problem
+
+Gross domestic product (GDP) is the total value of all final products and services generated inside a nation in a given year. It quantifies the services and goods that a nation offers and is used to evaluate the health and performance of an economy. It is widely employed in addressing a wide range of needs, including those in business, finance, research institutes, and other industries. Foreign investors are included as well in these monthly and annual computations for as long as their source of income and their services are within the country's borders. This defines the difference between Gross Domestic Product and Gross National Income, as Gross National Income tries to monitor the income earned by a country's residents while being off the borders.
+
+Considering the direct impact of the pandemic on the economy, the Philippines managed an annual GDP growth rate of 5.7% in 2021, rebounding from a -9.6% decrease in 2020, according to data from the Philippine Statistics Authority (PSA) and the World Bank. Over the years, the Philippines has been recognized as having one of the world's fastest-growing economies. However, economic data changes per year of government performance (Urrutia et al., 2019). As a result, with the changeover of administration in the Philippines in 2022, including newly seated leaders in the government, it is vital to evaluate the country's economic data and construct economic models to gain a better understanding of the country's economy in the next years, as well as whether or not to change the existing economic system and techniques. This may be used by policymakers to evaluate the impact of policies on the economy, and it will be taken into account for determining interest rates, tax rates, and trade policies (Fagan, 2019).
+
+The Philippines' gross domestic product (GDP) continues to expand at the predetermined rate. If this rate is maintained, we will be able to make reasonable assumptions about the nation's economic value over the next few years. Despite the fact that the Gross Domestic Product of the Philippines may be affected by a variety of factors, we continue to attempt to forecast its growth in the present and near future. This will be our primary focus both immediately and in the near future.
+
+Nonetheless, local governments rely on GDP and comparable figures to develop policy and determine the affordability of public spending. Economists use the GDP and related figures to improve their research. The rate of economic expansion influences company circumstances, investment decisions, and the availability of employment. (Fagan, 2019). More importantly, the strength of global and local economies affects everyone, and GDP is an important indicator of an economy's size, performance, and overall health. GDP and associated statistics are used by policymakers, government officials, corporations, economists, and the general public to analyze the economy's health and assist in making informed decisions. (Fagan, 2019; Kramer, 2022; Stobierski, 2021).
+
+Several studies have been conducted in order to better understand the future trend of GDP and the elements that influence it. There are several ways to macroeconomic estimating that may be used, such as linear regression, Autoregressive Integrated Moving Average (ARIMA) model: AR model, MA model, ARIMA model, VAR model, and so forth (Salah Uddin & Tanzim, 2021). Thus, this study aims to forecast the annual GDP of the Philippines in ten years, from 2022 to 2031; and determine the significant factors affecting the GDP in the Philippines.
+
+## Methodology
+
+In this study, the annual gross domestic product (GDP) of the Philippines from 1990 to 2021 are obtained from the International Monetary Fund (IMF), while the factors influencing the GDP which are involved in the study are taken from the World Bank Data Bank. In making predictions for the GDP in the Philippines from 2022 to 2031, the Autoregressive Integrated Moving Average (ARIMA) model is used. GDP is defined as the dependent variable, and it is depicted as a function of numerous macroeconomic indicators of growth. Such variables could be gross national income, labor force population, foreign exchange (or outward remittance), and stocks (or market capitalization of domestic companies in the Philippines. In assessing the relationship between the dependent variables (i.e., GDP) and the independent variables (i.e., factors influencing the GDP), multiple linear regression models are used. The analyses are subject to the availability of data, thus, for comparing the GDP and the independent variables, it only covers the years 1996 to 2019. Additionally, all data are collected and presented in USD (United States Dollar) to facilitate better comparison with other countries. For statistical computations and graphical analysis, RStudio is used.
+
+```{r, include=FALSE}
+library(readxl)
+library('fpp2')
+library(dplyr)
+library(gridExtra)
+library(urca)
+library(ggplot2)
+
+# Import the excel file "gdpdata" which contains the data that will be used in this paper.
+# There is no need to change the name of the data set because we will use the file name.
+
+gdpdata <- read_excel("D:/Abegail Borces/2_BSAM/BSAM_2ND YR_SECOND SEM/AMAT 132/FINAL PROJECT/gdpdata.xlsx")
+View(gdpdata)
+
+# Now, create a time series
+GDP <- ts(gdpdata$gdp, start=1990)
+print(GDP)
+
+# Plot the time series data
+autoplot(GDP)
+
+# ndiffs function determines the order of differencing to make the data stationary
+ndiffs(GDP)
+autoplot(diff(GDP), lag=1, difference=2)
+
+ggAcf(GDP)
+ggAcf(diff(GDP))
+
+Box.test(diff(GDP), lag = 6, type = "Ljung-Box")
+
+# ARIMA
+fit1 <- auto.arima(GDP, seasonal = FALSE)
+print(fit1)
+
+# make the auto.arima() work harder by using arguments stepwise = FALSE and approximation = FALSE
+fit2 <- auto.arima(GDP, seasonal = FALSE, stepwise = FALSE, approximation = FALSE)
+print(fit2)
+print(summary(fit2))
+
+# fit1 and fit2 have the same result which is ARIMA(0,2,1)
+# Hence, we will use this model
+
+
+# Multiple regression
+# For multiple regression, we will only use data from 1996 to 2019 because it's the only inteval that the data for the gdp and other factors are complete
+# Import the excel file "lmgdp" which contains the data that will be used in this paper.
+
+lmgdp <- read_excel("D:/Abegail Borces/2_BSAM/BSAM_2ND YR_SECOND SEM/AMAT 132/FINAL PROJECT/lmgdp.xlsx")
+View(lmgdp)
+
+gdpmr<- lm(gdp ~ gni+fe+lf+st, data= lmgdp)
+summary(gdpmr)
+summary(gdpmr)$coefficient
+
+gdplm1<- lm(gdp ~ gni, data= lmgdp) # lm for gdp and gni
+gdplm2<- lm(gdp ~ fe, data= lmgdp) # lm for gdp and foreign exchange
+gdplm3<- lm(gdp ~ lf, data= lmgdp) # lm for gdp and labor force
+gdplm4<- lm(gdp ~ st, data= lmgdp) #lm for gdp and stock
+
+summary(gdplm1)
+summary(gdplm2)
+summary(gdplm3)
+summary(gdplm4)
+
+
+```
+
+## Results and Discussion
+
+### *Model Development*
+
+To reduce variability, Auto ARIMA is used which combines unit root tests, minimization of corrected Akaike tests (AICc) and the maximum likelihood estimation (MLE) to obtain an ARIMA model through Hyndman-Khandakar algorithm for automatic ARIMA modeling.
+
+After differencing the data d times, the values of p and q are determined by minimizing the AICc. Instead of evaluating every unique combination of p and q, the algorithm traverses the model space through a stepwise search. Thus, resulting to an ARIMA p,d,q model with p=0, d=2, and q=1.
+
+### *Model Adequacy*
+
+To assess the model adequacy, Q-Q plot, residuals plot, autocorrelation function or covariance (ACF) and partial autocorrelation function (PACF) plots of the residuals are shown.
+
+```{r, echo=FALSE, fig.align="center"}
+
+par(mfrow=c(2,2))
+qqnorm(residuals(fit2), pch = 1)
+qqline(residuals(fit2), col = "steelblue", lwd = 2)
+plot(residuals(fit2), main= "Residuals")
+Acf(residuals(fit2), main= "ACF plot of Residuals of the model")
+Pacf(residuals(fit2), main= "PACF plot of Residuals of the model")
+
+
+```
+
+```{=tex}
+\begin{center}
+Figure 1. Q-Q plot, residuals plot, ACF and PACF plots.
+\end{center}
+```
+As illustrated in Figure 1, the points in the normal Q-Q plot appear to fall along a straight line, thus, model residuals are normally distributed. Also, there exists no systematic pattern in the residuals plot which means that the residuals are distributed independently. Additionally, as depicted in the ACF and PACF plots, there is no notable rise or spike in any lag residuals which indicates the lag independence of residuals. Since the fitting results of the model are reasonable and residuals meet the assumptions of a fitted model, the ARIMA (0,2,1) model can now be used to make predictions.
+
+### *Fitting ARIMA (0,2,1) for Full Data and Future Forecast*
+
+Using the developed model, the forecasted value of the gross domestic product (GDP) in the Philippines from 2022 to 2031 are given below:
+
+```{r, include=FALSE}
+y<- forecast(fit2)
+print(forecast(fit2))
+```
+
+```{=tex}
+\begin{center}
+Table 1. Forecasted GDP of the Philippines from 2022 to 2031.
+\end{center}
+```
+```{r echo=FALSE, warning=FALSE, results='asis'}
+
+library(knitr)
+kable(data.frame(Year=seq(2022,2031), 'Gross Domestic Product'=c(409.3082,425.0043,440.7005,456.3967,472.0928,487.7890,503.4852,519.1813,534.8775,550.5737)))
+```
+
+```{=tex}
+\begin{center}
+Unit of Measure (Currency) in Billion USD
+\end{center}
+```
+Presented in Table 1 are the forecasted GDP using the developed ARIMA (0,2,1) model, by which the GDP growth rates are projected. Results have shown that the Philippines' GDP growth rate follows an increasing trend, thus, informing policymakers to craft more explicitly established economic and commercial strategies to maintain such steady growth.
+
+The real GDP or the historical data (1990-2020) and forecasted GDP (2022-2031) are illustrated below:
+
+```{r, echo=FALSE, fig.height=3, fig.width=4.5, fig.align="center"}
+autoplot(forecast(fit2))
+```
+
+```{=tex}
+\begin{center}
+Figure 2. Real and forecasted GDP values.
+\end{center}
+```
+As shown in Figure 2, the real and forecasted GDP growth sequences likely follows an increasing trend which suggests that it follows a non-stationary shape where both mean and variances are changing.
+
+### *Multiple Linear Regression Model*
+
+Multiple linear regression requires a linear relationship between the dependent and independent variables which can be shown in scatterplots to confirm the linearity assumption.
+
+```{r, echo=FALSE, fig.align="center"}
+
+par(mfrow=c(2,2))
+p1 <- plot(gdp ~ gni, data=gdpdata, xlab="Gross National Income", ylab="Gross Domestic Product", pch=16, col="red")
+p2 <- plot(gdp ~ fe, data=gdpdata, xlab="Foreign Exchange", ylab="Gross Domestic Product", pch=16, col="blue")
+p3 <- plot(gdp ~ lf, data=gdpdata,  xlab="Labor Force", ylab="Gross Domestic Product",pch=16, col="green")
+p4 <- plot(gdp ~ st, data=gdpdata,  xlab="Stocks", ylab="Gross Domestic Product", pch=16, col="purple")
+
+
+```
+
+```{=tex}
+\begin{center}
+Figure 3. Scatter plot of gross domestic product (GDP) and the independent variables: gross national income (red), foreign exchange (blue), labor force population (green), and stocks (purple).
+\end{center}
+```
+Figure 3 shows the association between the gross domestic product (GDP) and the independent variables by fitting each independent variable to the dependent variable individually. On the other hand, to better assess the relationship between these variables and to fit them all, multiple linear regression is used.
+
+Hypotheses for estimates are:
+
+1.  H~o1~: Gross national income does not have any significant effect on GDP.
+
+    H~a1~: Gross national income has a significant effect on GDP.
+
+2.  H~o2~: Labor force population does not have any significant effect on GDP.
+
+    H~a2~: Labor force population has a significant effect on GDP.
+
+3.  H~o3~: Foreign exchange does not have any significant effect on GDP.
+
+    H~a3~: Foreign exchange has a significant effect on GDP.
+
+4.  H~o4~: Stocks do not have any significant effect on GDP.
+
+    H~a4:~ Stocks have a significant effect on GDP.
+
+| Variable                  | Beta Estimate | P value for Beta Estimate |
+|------------------------|---------------|---------------------------|
+| Gross National Income  | 0.178         | 0.001                     |
+| Labor Force Population | 2665.021      | 0.835                     |
+| Foreign Exchange       | 13.296        | 0.149                     |
+| Stocks                 | 0.414         | 0.000                     |
+
+```{=tex}
+\begin{center}
+Table 2. Results of the multiple linear regression model.
+\end{center}
+```
+Results have shown that among the variables, only the gross national income and stocks significantly affects the GDP with p-value from estimate of .001 and .000, respectively, Thus, at 5% level of significance, the null hypotheses (Ho1 and Ho4) are rejected, and hence, gross national income and stocks are highly significant. Therefore, these variables are the vital factors which significantly affect the GDP.
+
+### *Final Model*
+
+Using simple linear regression on each of the variables found to be significantly affecting the GDP, the gross national income explains 98.3% of the variability of the GDP, and based on its estimate, when the gross national income increases by 1 USD, GDP will increase on average .178 USD. On the other hand, the stocks exhibited that it captures 97.82% of the total variation of GDP, and similarly, when increased by 1 USD, the GDP will also increase at an average of .414 USD. Thus, these factors must be taken into account in making predictions of the GDP in the Philippines.
+
+Additionally, from the model adequacy assessment using the normal Q-Q plot shown in Figure 1, the maximum points are found along or near the straight line. Thus, as one of the assumptions of a linear regression, it follows that the errors are normally distributed.
+
+## Conclusion
+
+In making predictions for the annual gross domestic product (GDP) of the Philippines for the next ten years, including this year (2022-2031), ARIMA (0,2,1) model is constructed. Factors affecting the GDP are also assessed through multiple linear regression models, and it is found that the gross national income and stocks (or market capitalization of domestic companies in the Philippines) significantly affect the GDP. Moreover, results have shown that the projected GDP of the Philippines in the next ten years will continuously increase. However, long-term predictions cannot prevent substantial error due to the occurrence of unanticipated events including financial crises, foreign conflicts, and catastrophic natural calamities (Morikawa, 2020). Also, several factors, such as interest rates, consumer confidence, rising housing prices, real wages, the value of the exchange rate, and the banking sector, may influence the increase and decrease of aggregate demand. This means that the forecasted GDPs would most likely become less inaccurate in the next ten years. Thus, this urges policymakers to make better decisions and amendments to achieve economic growth in the future.
+
+## Repository: GitHub
+
+[Bajo, Borces, Catalan GitHub link](https://github.com/monaleeeeey/GDP-Forecast_ARIMA_Multiple-Regression.git)
+
+## References
+
+Fagan, D. (2019, March 27). What Is GDP, and Why Is It Important? Stlouisfed.org; Federal Reserve Bank of St. Louis. <https://www.stlouisfed.org/open-vault/2019/march/what-is-gdp-why-important>
+
+Kramer, L. (2022, May 3). What is GDP and why is it so important to economists and investors? Investopedia. Retrieved May 11, 2022, from <https://www.investopedia.com/ask/answers/what-is-gdp-why-its-important-to-economists-investors/>
+
+Morikawa, M. (2020, February 10). The accuracy of long-term growth forecasts by economics researchers. VOX, CEPR Policy Portal. Retrieved June 5, 2022, from <https://voxeu.org/article/accuracy-long-term-growth-forecasts-economics-researchers> 
+
+Salah Uddin, K. M., & Tanzim, N. (2021). The role of internal auditors in achieving the social responsibility of the commercial banks operating in Jordan: A field study. International Journal of Business and Management, 16(6), 56. <https://doi.org/10.5539/ijbm.v16n6p56> 
+
+Stobierski, T. (2021, June 8). What Is GDP & Why Is It Important? Business Insights - Blog. <https://online.hbs.edu/blog/post/why-is-gdp-important> 
+
+Urrutia, J. D., Longhas, P. R., & Mingo, F. L. (2019). Forecasting the gross domestic product of the Philippines using Bayesian Artificial Neural Network and autoregressive integrated moving average. AIP Conference Proceedings. <https://doi.org/10.1063/1.5139182>
+
+\
